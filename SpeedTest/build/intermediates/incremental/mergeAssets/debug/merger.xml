@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3"><dataSet config="main"><source path="/Users/Xander/AndroidStudioProjects/speedtest_src1/SpeedTest/src/main/assets"><file name="dummy.txt" path="/Users/Xander/AndroidStudioProjects/speedtest_src1/SpeedTest/src/main/assets/dummy.txt"/></source></dataSet><dataSet config="debug"><source path="/Users/Xander/AndroidStudioProjects/speedtest_src1/SpeedTest/src/debug/assets"/></dataSet></merger>

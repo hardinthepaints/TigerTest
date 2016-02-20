@@ -38,7 +38,7 @@
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="backgroundDark">#ee7b7b7b</color>
-    <color name="backgroundPrimary">#fa5861</color>
+    <color name="backgroundPrimary">#ff4651</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
     <color name="background_floating_material_dark">#ff424242</color>
@@ -47,7 +47,7 @@
     <color name="background_material_light">#ffeeeeee</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
     <eat-comment/>
-    <color name="borderPrimary">#a05cd4</color>
+    <color name="borderPrimary">#8f00fc</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
     <color name="bright_foreground_disabled_material_dark">#80ffffff</color>

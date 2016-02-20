@@ -8,7 +8,7 @@
     >
 
     <TextView
-        android:textColor="@color/textColorPrimary"
+        android:textColor="@color/PingTextColor"
         android:layout_margin="50dp"
         android:textSize="@dimen/abc_text_size_large_material"
         android:layout_centerInParent="true"
@@ -32,7 +32,9 @@
             android:layout_height="match_parent"
             android:text="WIFI SETTINGS"
             android:id="@+id/settings_btn"
-            android:layout_gravity="left|center_vertical" />
+            android:layout_gravity="left|center_vertical"
+            android:textColor="@color/PingTextColor"
+            />
 
 
         <Button
@@ -41,6 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:text="CLOSE"
+            android:textColor="@color/PingTextColor"
             android:id="@+id/close_popup_btn"
             android:layout_below="@+id/errorMessage"
             android:layout_gravity="right|center_vertical" />

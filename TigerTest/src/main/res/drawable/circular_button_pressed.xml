@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <stroke android:color="@color/borderPrimary"
-        android:width="5dp"
+    <stroke android:color="@color/PingTextColor"
+        android:width="7dp"
         />
-    <solid android:color="@color/backgroundDark" />
-    <corners android:bottomRightRadius="80dp"
-        android:bottomLeftRadius="80dp"
-        android:topRightRadius="80dp"
-        android:topLeftRadius="80dp"/>
+    <solid android:color="@color/textColorPrimary" />
+    <corners android:bottomRightRadius="500dp"
+        android:bottomLeftRadius="500dp"
+        android:topRightRadius="500dp"
+        android:topLeftRadius="500dp"/>
 </shape>

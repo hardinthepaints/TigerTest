@@ -49,7 +49,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
-import android.text.SpannableString;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.util.TypedValue;
@@ -57,15 +56,19 @@ import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -85,7 +88,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 	/* key values for use in the 'data' hashmap, which will be sent to the server
 			These values must match the values on the server end for this to properly work,
-			so ANY CHANGES HERE SHOULD BE REFLECTED ON THE SERVER
+			so ANY CHANGES HERE SHOULD BE REFLECTED ON THE SERVER_URL
 	 */
 	private static final String NETWORK_STRING = "network";
 	private static final String LAT_STRING = "latitude";
@@ -107,7 +110,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	private static int EXPECTED_SIZE_IN_BYTES = 5 * 1000000;//5MB 1024*1024
 
 	private static final String TIMESTAMP_FORMAT = "dd/MM/yy HH:mm:ss";
-	private String SERVER;
+	private String SERVER_URL;
 
 	private String download_file_url = "http://www.smdc.army.mil/smdcphoto_gallery/Missiles/IFT_13B_Launch/IFT13b-3-02.jpg";
 
@@ -121,8 +124,15 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	private LinearLayout mResultContainer;
 	//private HorizontalScrollView mScroller;
 	private ScrollView mScroller;
+	private ScrollView mTopScroller;
 
-	/* popup window */
+    private RelativeLayout mStartBtnContainer;
+    private float ratioHeightBtnParent;
+    private float ratioHeightSpacer;
+
+
+
+    /* popup window */
 	PopupWindow pwindo;
 
 
@@ -159,6 +169,9 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
     private HorizontalScrollView downspeed_scroller;
     private HorizontalScrollView ping_scroller;
 
+    /* progress bar */
+    private ProgressBar mCustomProgressBar;
+
 
 
     private HashMap<String, Integer> textAndColor;
@@ -168,12 +181,13 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 	private boolean mRaining = false;
 
-
+    /* store the screen dimensions */
 	private Point screenDimens;
+    private Animation animFadeIn;
+    private Animation animFadeOut;
 
 
-
-	/** Called when the activity is first created. */
+    /** Called when the activity is first created. */
 	//@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -184,18 +198,19 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		Display display = getWindowManager().getDefaultDisplay();
 		display.getSize(screenDimens);
 
+        /* control look of layout using ratio of screen height */
+        ratioHeightBtnParent = .8f;
+        ratioHeightSpacer = .75f * (1 - ratioHeightBtnParent);
 
-		SERVER = getString(R.string.server_address);
+		SERVER_URL = getString(R.string.server_address);
 
 		mDecimalFormater=new DecimalFormat("##.##");
-		//Request the progress bar to be shown in the title
+        //Request the progress bar to be shown in the title
 		requestWindowFeature(Window.FEATURE_PROGRESS);
 		setContentView(R.layout.main);
-		bindListeners();
 
 		buildGoogleApiClient();
 		//mGoogleApiClient.connect();
-
 
 		mResultViewer = (TextView)findViewById(R.id.resultviewer);
 		mResultViewer.setText("");
@@ -205,17 +220,56 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 		mResultContainer = (LinearLayout) findViewById(R.id.resultContainer);
 		mScroller = (ScrollView) findViewById(R.id.horizontalScrollView);
+        mStartBtnContainer = (RelativeLayout) findViewById(R.id.topContainerA);
+        RelativeLayout mBottomContainer = (RelativeLayout) findViewById(R.id.start_btn_parent);
+
+        /* top scroll view */
+        mTopScroller = (ScrollView) findViewById(R.id.topScrollView);
+        ViewGroup temp = (ViewGroup)(mTopScroller.getChildAt(0));
+        temp.setMinimumHeight(2 * screenDimens.y);
+        (temp.getChildAt(0)).setMinimumHeight( screenDimens.y);
+
+
+        /* initialize custom progeress bar */
+        mCustomProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
+        findViewById(R.id.progress_bar_container).setMinimumHeight((int) (ratioHeightSpacer * screenDimens.y));
+
+
+        /* redo buttom */
+        RelativeLayout newStartBtnContainer = ViewCreator.getRoundButton(SpeedTestLauncher.this, (int) (screenDimens.x/4f));
+        ((ViewGroup)mTopScroller.getChildAt(0)).removeView(mStartBtnContainer);
+        mStartBtnContainer = newStartBtnContainer;
+        ((ViewGroup)mTopScroller.getChildAt(0)).addView(mStartBtnContainer);
+        mStartBtnContainer.setMinimumHeight(screenDimens.y);
+
+        bindListeners();
+
 
         mResultContainer.removeView(mResultViewer);
 
+        /* initialize all animations and associated listeners */
+        initAnimations();
 
 
-		/* data structures to keep track of text and color */
-		textAnim = new LinkedList();
+        /* add spacers to scroll view */
+        populateScrollView();
+
+        /* make start button parent a certain size */
+        mBottomContainer.setMinimumHeight((int) ( 1.1 * ratioHeightBtnParent * screenDimens.y));
+
+        /* set ui to default not testing mode */
+        changeUI(0);
+
+	}
+
+    private void initAnimations(){
+
+        /* data structures to keep track of text and color */
+        textAnim = new LinkedList();
         scrollersToAnimate = new LinkedList<>();
-		textAndColor = new HashMap<>();
+        textAndColor = new HashMap<>();
 
-		v = (Vibrator) SpeedTestLauncher.this.getSystemService(Context.VIBRATOR_SERVICE);
+        v = (Vibrator) SpeedTestLauncher.this.getSystemService(Context.VIBRATOR_SERVICE);
 
         scrollerFlyIn = new ScaleAnimation(0, 1, 0, 1, Animation.RELATIVE_TO_PARENT, .5f, Animation.ABSOLUTE, -1000);
         scrollerFlyIn.setDuration(300);
@@ -238,7 +292,8 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
                     if (!scrollersToAnimate.isEmpty()) {
                         HorizontalScrollView next = scrollersToAnimate.peekFirst();
-                        next.startAnimation(scrollerFlyIn);
+                        //next.startAnimation(scrollerFlyIn);
+                        runOnUiThread(new UpdateUI(next));
                     }
 
                     last.setVisibility(View.VISIBLE);
@@ -255,53 +310,13 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         });
 
 		/* load a flyin animation to animate text views */
-		animationFlyIn = new ScaleAnimation(0, 1, 0, 1, Animation.RELATIVE_TO_PARENT, .5f, Animation.ABSOLUTE, -1000);
-		animationFlyIn.setDuration(300);
-		animationFlyIn.setAnimationListener(new Animation.AnimationListener() {
-			@Override
-			public void onAnimationStart(Animation animation) {
+        animationFlyIn = new ScaleAnimation(0, 1, 0, 1, Animation.RELATIVE_TO_PARENT, .5f, Animation.ABSOLUTE, -1000);
+        animationFlyIn.setDuration(300);
 
-			}
-
-			@Override
-			public void onAnimationEnd(Animation animation) {
-				if (!textAnim.isEmpty()) {
-
-					/* vibrate for 250 ms */
-					v.vibrate(250);
-
-					String last = textAnim.pop();
-					int c = textAndColor.get(last);
-
-
-					/* pop off the next thing to be animated off the queue and animate */
-					if (!textAnim.isEmpty()) {
-						String next = textAnim.peekFirst();
-						runOnUiThread(new UpdateUI(next, textAndColor.get(next)));
-					} else {
-						mRaining = false;
-					}
-
-					/* add an item to the mScroller */
-					//addStringToScroller(last, c);
-
-
-					mScroller.fling(300);
-				}
-
-
-			}
-
-			@Override
-			public void onAnimationRepeat(Animation animation) {
-
-			}
-		});
-
-        /* add spacers to scroll view */
-        populateScrollView();
-
-	}
+        /* fade in and fade out animations */
+        animFadeIn = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_in);
+        animFadeOut = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.fade_out);
+    }
 
 	/* get the mac address of the device
 	* should be called only once
@@ -324,16 +339,21 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         /* make a text view to display in horizontal mScroller */
         TextView toAdd = new TextView(SpeedTestLauncher.this);
         HorizontalScrollView hs = new HorizontalScrollView(SpeedTestLauncher.this);
-        FrameLayout fl = new FrameLayout(SpeedTestLauncher.this);
-        fl.addView(toAdd);
-        hs.addView(fl);
+        RelativeLayout rl = new RelativeLayout(SpeedTestLauncher.this);
+        //rl.setGravity(Gravity.CENTER);
+        rl.addView(toAdd);
+        hs.addView(rl);
 
+
+        /* set a minimum height */
+        hs.setMinimumHeight((int) (ratioHeightSpacer * screenDimens.y));
+
+        toAdd.setGravity(Gravity.CENTER);
         toAdd.setText(text);
         toAdd.setTextSize(mResultViewer.getTextSize());
         toAdd.setMovementMethod(new ScrollingMovementMethod());
         toAdd.setMaxLines(1);
         toAdd.setScrollbarFadingEnabled(true);
-        //toAdd.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
         toAdd.setTextColor(c);
 
 		/* if it is a spacer, it will have no content */
@@ -362,26 +382,23 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         Rect r = new Rect();
         paint.getTextBounds(text, 0, text.length(), r);
         float ratio = (float)(screenDimens.x) / r.width();
-        System.out.println("text length: " + paint.measureText(text) + ", toAdd.getWidth(): " + toAdd.getWidth() + "toAdd.getMeasuredWidth(): " + toAdd.getMeasuredWidth() + ", Screen dimens x:" + screenDimens.x + ", ratio: " + ratio);
-
-
         toAdd.setTextSize(TypedValue.COMPLEX_UNIT_PX, toAdd.getTextSize() * ratio);
     }
 
-	/**addStringToScroller
-	 *      add a textview with the text and color and do a flyin animation
-	 * @param text the text of the item
-	 * @param c the color of the text
-	 */
-	private void addStringToScroller(String text, int c){
-
-	 	HorizontalScrollView hs = getNewItem(text, c);
-
-        addViewToScroller(hs);
-
-		hs.startAnimation(animationFlyIn);
-
-	}
+//	/**addStringToScroller
+//	 *      add a textview with the text and color and do a flyin animation
+//	 * @param text the text of the item
+//	 * @param c the color of the text
+//	 */
+//	private void addStringToScroller(String text, int c){
+//
+//	 	HorizontalScrollView hs = getNewItem(text, c);
+//
+//        addViewToScroller(hs);
+//
+//		hs.startAnimation(animationFlyIn);
+//
+//	}
 
     /** addViewToScroller
      *      add a view to the scroller after the spacers
@@ -398,18 +415,18 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	private String getTimeStamp(){
 		//getting current date and time using Date class
 		DateFormat df = new SimpleDateFormat();
-		Date dateobj = new Date();
-		return df.format(dateobj);
-	}
+        Date dateobj = new Date();
+        return df.format(dateobj);
+    }
 
 
-	/**
-	 * Setup event handlers and bind variables to values from xml
-	 */
-	private void bindListeners() {
-		mBtnStart = (Button) findViewById(R.id.btnStart);
+    /**
+     * Setup event handlers and bind variables to values from xml
+     */
+    private void bindListeners() {
+        mBtnStart = (Button) mStartBtnContainer.findViewById(R.id.btnStart);
 
-		mBtnStart.setOnClickListener(new OnClickListener(){
+        mBtnStart.setOnClickListener(new OnClickListener(){
 			@Override
 			public void onClick(final View view) {
 				changeUI(1);
@@ -423,6 +440,9 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 			}
 		});
+
+
+
 	}
 
 	private int getRandomColor(){
@@ -517,14 +537,36 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
     /* add empty textviews to use as spacers */
     private void populateScrollView(){
+        //mTopScroller.setSmoothScrollingEnabled(true);
 
-        //add spacers
-        for (int i = 0; i < 5; i ++){
-            addStringToScroller("", getRandomColor());
-        }
+        mTopScroller.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
+
+            int lastScrollY = mTopScroller.getScrollY();
+
+
+
+            @Override
+            public void onScrollChanged() {
+
+                int deltaY = mTopScroller.getScrollY() - lastScrollY;
+                lastScrollY = mTopScroller.getScrollY();
+                mTopScroller.scrollTo(mTopScroller.getScrollX(), mTopScroller.getScrollY() + deltaY);
+                mScroller.scrollTo(mScroller.getScrollX(),  mScroller.getScrollY() + deltaY);
+
+
+                //int scrollY = mTopScroller.getScrollY(); //for verticalScrollView
+
+                //Log.d(TAG, "onScrollChanged: " + scrollY);
+                //DO SOMETHING WITH THE SCROLL COORDINATES
+
+            }
+        });
 
         /* initialize scrollers */
         network_scroller = getNewItem("<network scroller>", getResources().getColor(R.color.networkTextColor));
+        //network_scroller.getChildAt(0).setBackground(getResources().getDrawable(R.drawable.network_border));
+
+
         ping_scroller = getNewItem("<ping_scroller>", getResources().getColor(R.color.PingTextColor));
         downspeed_scroller = getNewItem("<downspeed_scroller>", getResources().getColor(R.color.downSpeedTextColor));
 
@@ -540,10 +582,11 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 
     }
-
 	private void changeUI( int mode ){
 		if (mode == 1){
 			setProgressBarVisibility(true);
+            mCustomProgressBar.startAnimation(animFadeIn);
+            mCustomProgressBar.setVisibility(View.VISIBLE);
 			mResultViewer.setText("");
 
             /* remove the items from scroller that are not spacers */
@@ -565,7 +608,9 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 			mBtnStart.setBackground(getResources().getDrawable(R.drawable.circular_button_pressed));
 
 		} else if ( mode == 0){
-			mBtnStart.setEnabled(true);
+            mCustomProgressBar.startAnimation(animFadeOut);
+            mCustomProgressBar.setVisibility(View.INVISIBLE);
+            mBtnStart.setEnabled(true);
 			mBtnStart.setBackground(getResources().getDrawable(R.drawable.circular_button_notpressed));
 			mBtnStart.setText("START TEST");
 			setProgressBarVisibility(false);
@@ -583,6 +628,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 				//mTxtSpeed.setText(String.format(getResources().getString(R.string.update_speed), mDecimalFormater.format(info1.kilobits)));
 				// Title progress is in range 0..10000
 				setProgress(100 * msg.arg1);
+                mCustomProgressBar.setProgress(100 * msg.arg1);
 				//mTxtProgress.setText(String.format(getResources().getString(R.string.update_downloaded), msg.arg2, EXPECTED_SIZE_IN_BYTES));
 
 				break;
@@ -623,7 +669,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 				try {
                     Toast toast = Toast.makeText( getApplicationContext(), "Posting to server...", Toast.LENGTH_LONG);
                     toast.show();
-                    ServerRequestor.post( SERVER, data ) ;
+                    ServerRequestor.post(SERVER_URL, data ) ;
                     toast.setText("Post Successful!");
                     toast.show();
 
@@ -653,7 +699,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         TextView tv;
 		textAndColor.put(z, getResources().getColor(R.color.downSpeedTextColor));
 		textAnim.add(z);
-        tv = ((TextView)((FrameLayout) downspeed_scroller.getChildAt(0)).getChildAt(0));
+        tv = ((TextView)((RelativeLayout) downspeed_scroller.getChildAt(0)).getChildAt(0));
         tv.setText(z);
         adjustTextView(tv);
         scrollersToAnimate.add(downspeed_scroller);
@@ -663,7 +709,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		z = "Ping: " + data.get(CONNTIME_STRING) + data.get(CONNTIMEUNIT_STRING);
 		textAndColor.put(z, getResources().getColor(R.color.PingTextColor));
 		textAnim.add(z);
-        tv = ((TextView)((FrameLayout) ping_scroller.getChildAt(0)).getChildAt(0));
+        tv = ((TextView)((RelativeLayout) ping_scroller.getChildAt(0)).getChildAt(0));
         tv.setText(z);
         adjustTextView(tv);
         scrollersToAnimate.add(ping_scroller);
@@ -672,7 +718,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		z = data.get(NETWORK_STRING);
 		textAndColor.put(z, getResources().getColor(R.color.networkTextColor));
 		textAnim.add(z);
-        tv = ((TextView)((FrameLayout) network_scroller.getChildAt(0)).getChildAt(0));
+        tv = ((TextView)((RelativeLayout) network_scroller.getChildAt(0)).getChildAt(0));
         tv.setText(z);
         adjustTextView(tv);
         scrollersToAnimate.add(network_scroller);
@@ -686,7 +732,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
         if (!scrollersToAnimate.isEmpty()){
             HorizontalScrollView first = scrollersToAnimate.peekFirst();
-            first.startAnimation(scrollerFlyIn);
+            runOnUiThread(new UpdateUI(first));
         }
 	}
 
@@ -961,22 +1007,20 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		mp.start();
 	}
 
-	/* a e to update ui */
+    /** UpdateUI
+     *      a runnable to perform a scrollview animation (usually called to operate on the UI thread )
+     */
 	class UpdateUI implements Runnable
 	{
-		String updateString;
-		//HashMap<String,Integer> toAnimate;
-		int color;
+        HorizontalScrollView horizontalScrollView;
 
-		public UpdateUI(String updateString, int color) {
+		public UpdateUI(HorizontalScrollView horizontalScrollView) {
 
-			this.updateString = updateString;
-			this.color = color;
+			this.horizontalScrollView = horizontalScrollView;
 		}
 		public void run() {
 
-			addStringToScroller(updateString, color);
-
+            horizontalScrollView.startAnimation(scrollerFlyIn);
 		}
 	}
 

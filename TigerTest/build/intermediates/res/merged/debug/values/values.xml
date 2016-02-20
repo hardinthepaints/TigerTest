@@ -82,6 +82,9 @@
     <color name="common_plus_signin_btn_text_light_disabled">#FFAAAAAA</color>
     <color name="common_plus_signin_btn_text_light_focused">#FF737373</color>
     <color name="common_plus_signin_btn_text_light_pressed">#DE000000</color>
+    <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
+    <eat-comment/>
+    <color name="deepGreen">#178900</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
     <color name="dim_foreground_disabled_material_dark">#80bebebe</color>
@@ -90,7 +93,8 @@
     <color name="dim_foreground_material_light">#ff323232</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
     <eat-comment/>
-    <color name="downSpeedTextColor">#ee00f472</color>
+    <color name="downSpeedTextColor">#ee21b300</color>
+    <color name="fireLit">#ff9100</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
     <color name="highlighted_text_material_dark">#6680cbc4</color>
@@ -130,6 +134,7 @@
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
     <eat-comment/>
     <color name="textColorPrimary">#000000</color>
+    <color name="transParent">#00ffff08</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-wallet/8.3.0/res/values/wallet_colors.xml -->
     <eat-comment/>
     <color name="wallet_bright_foreground_disabled_holo_light">#ffb2b2b2</color>

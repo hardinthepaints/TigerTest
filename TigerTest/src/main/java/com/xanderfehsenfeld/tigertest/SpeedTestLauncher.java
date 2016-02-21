@@ -30,10 +30,18 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+
+
+
+import com.xanderfehsenfeld.tigertest.LocalDB.DatabaseManagerService;
+import com.xanderfehsenfeld.tigertest.LocalDB.FeedReaderDbHelper;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -45,9 +53,15 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+import android.os.ResultReceiver;
 import android.os.Vibrator;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -64,7 +78,6 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -72,11 +85,10 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
+import com.xanderfehsenfeld.tigertest.GPS.GPSTracker;
+import com.xanderfehsenfeld.tigertest.LocalDB.MyDbWrapper;
 
 /**
  * Test speed of our network connection
@@ -84,33 +96,21 @@ import com.google.android.gms.location.LocationServices;
  * @version 1.0
  *
  */
-public class SpeedTestLauncher extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class SpeedTestLauncher extends Activity {
 
-	/* key values for use in the 'data' hashmap, which will be sent to the server
-			These values must match the values on the server end for this to properly work,
-			so ANY CHANGES HERE SHOULD BE REFLECTED ON THE SERVER_URL
-	 */
-	private static final String NETWORK_STRING = "network";
-	private static final String LAT_STRING = "latitude";
-	private static final String LONG_STRING = "longitude";
-	private static final String DOWNLOAD_STRING = "fileDownloaded";
-	private static final String ALT_STRING = "altitude";
-	private static final String TIMESTAMP_STRING = "timeStamp";
-	private static final String TIMESTAMPFMT_STRING = "timeStampFmt";
-	private static final String CONNTIME_STRING = "connectionTime";
-	private static final String CONNTIMEUNIT_STRING = "connectionTimeUnit";
-	private static final String BYTES_STRING = "bytesIn";
-	private static final String SPEED_STRING = "downSpeed";
-	private static final String MAC_STRING = "MACAddr";
-	private static final String ID_STRING = "uuid";
+
+
 
 
 	//Private fields
 	private static final String TAG = SpeedTestLauncher.class.getSimpleName();
+	private static final String DB_TAG = "DB";
+	private static final String LOCATION_SERVICES_TAG = "Location Service";
+
 	private static int EXPECTED_SIZE_IN_BYTES = 5 * 1000000;//5MB 1024*1024
 
 	private static final String TIMESTAMP_FORMAT = "dd/MM/yy HH:mm:ss";
-	private String SERVER_URL;
+	public static String SERVER_URL;
 
 	private String download_file_url = "http://www.smdc.army.mil/smdcphoto_gallery/Missiles/IFT_13B_Launch/IFT13b-3-02.jpg";
 
@@ -168,6 +168,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
     private HorizontalScrollView network_scroller;
     private HorizontalScrollView downspeed_scroller;
     private HorizontalScrollView ping_scroller;
+    private HorizontalScrollView mSettingsBtnScroller;
 
     /* progress bar */
     private ProgressBar mCustomProgressBar;
@@ -187,11 +188,65 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
     private Animation animFadeOut;
 
 
+    /* for binding with service */
+    private int mBindFlag;
+    private Messenger mServiceMessenger;
+
+    /* A service connection to connect this Activity with the speech recognition service */
+    final ServiceConnection mServiceConnection = new ServiceConnection()
+    {
+        public static final boolean DEBUG = true;
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service)
+        {
+            if (DEBUG) {Log.d(TAG, "onServiceConnected");} //$NON-NLS-1$
+            mServiceMessenger = new Messenger(service);
+            Message msg = new Message();
+            //msg.what = MyGPSLocationService.MSG_RECOGNIZER_START_LISTENING;
+
+            try
+            {
+                //mServerMessenger.send(msg);
+                mServiceMessenger.send(msg);
+            }
+            catch (RemoteException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name)
+        {
+            if (DEBUG) {Log.d(TAG, "onServiceDisconnected");} //$NON-NLS-1$
+            mServiceMessenger = null;
+        }
+
+    }; // mServiceConnection
+
+    MyResultReceiver resultReceiver;
+
+    GPSTracker mGPSTRacker;
+
+    /* local data base */
+    MyDbWrapper db;
+    private FeedReaderDbHelper mDbHelper;
+
+    private CountDownTimer mCountDownTimer;
+    private Button mBtnSettings;
+    private PopupWindow settingsPwindo;
+
+
     /** Called when the activity is first created. */
 	//@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+
+        /* setup result reciever */
+        resultReceiver = new MyResultReceiver(null);
 
 		/* get screenDimens width and height */
 		screenDimens = new Point();
@@ -209,19 +264,17 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		requestWindowFeature(Window.FEATURE_PROGRESS);
 		setContentView(R.layout.main);
 
-		buildGoogleApiClient();
-		//mGoogleApiClient.connect();
-
 		mResultViewer = (TextView)findViewById(R.id.resultviewer);
 		mResultViewer.setText("");
 
 		/* initialize the popup window */
 		initPopup();
+        initSettingsPopup();
 
 		mResultContainer = (LinearLayout) findViewById(R.id.resultContainer);
 		mScroller = (ScrollView) findViewById(R.id.horizontalScrollView);
         mStartBtnContainer = (RelativeLayout) findViewById(R.id.topContainerA);
-        RelativeLayout mBottomContainer = (RelativeLayout) findViewById(R.id.start_btn_parent);
+        //RelativeLayout mBottomContainer = (RelativeLayout) findViewById(R.id.start_btn_parent);
 
         /* top scroll view */
         mTopScroller = (ScrollView) findViewById(R.id.topScrollView);
@@ -234,18 +287,23 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         mCustomProgressBar = (ProgressBar) findViewById(R.id.progressBar1);
         findViewById(R.id.progress_bar_container).setMinimumHeight((int) (ratioHeightSpacer * screenDimens.y));
 
+        /* resize start button */
+        int radius = (int) (screenDimens.x/4f);
+        Button b = ((Button)findViewById(R.id.btnStart));
+        b.setWidth(radius * 2);
+        b.setHeight(radius * 2);
 
-        /* redo buttom */
-        RelativeLayout newStartBtnContainer = ViewCreator.getRoundButton(SpeedTestLauncher.this, (int) (screenDimens.x/4f));
-        ((ViewGroup)mTopScroller.getChildAt(0)).removeView(mStartBtnContainer);
-        mStartBtnContainer = newStartBtnContainer;
-        ((ViewGroup)mTopScroller.getChildAt(0)).addView(mStartBtnContainer);
-        mStartBtnContainer.setMinimumHeight(screenDimens.y);
+
+        (findViewById(R.id.btn_settings_scroller)).setMinimumWidth(screenDimens.x * 2);
+        (findViewById(R.id.btn_settings_container)).setMinimumWidth(screenDimens.x * 2);
+        mBtnSettings = (Button)findViewById(R.id.btn_settings);
+        mBtnSettings.setWidth(screenDimens.x / 3);
+        mBtnSettings.setMinimumHeight(screenDimens.y / 5);
+
+        mResultContainer.removeView(mResultViewer);
 
         bindListeners();
 
-
-        mResultContainer.removeView(mResultViewer);
 
         /* initialize all animations and associated listeners */
         initAnimations();
@@ -255,10 +313,20 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         populateScrollView();
 
         /* make start button parent a certain size */
-        mBottomContainer.setMinimumHeight((int) ( 1.1 * ratioHeightBtnParent * screenDimens.y));
+        //mBottomContainer.setMinimumHeight((int) (1.1 * ratioHeightBtnParent * screenDimens.y));
+        mResultContainer.setMinimumHeight((int) (9 * ratioHeightSpacer * screenDimens.y));
 
         /* set ui to default not testing mode */
         changeUI(0);
+
+        mGPSTRacker = new GPSTracker(this);
+
+
+        /* get a database helper */
+        mDbHelper = new FeedReaderDbHelper(getApplicationContext());
+
+        // Gets the data repository in write mode
+        db = new MyDbWrapper(mDbHelper.getWritableDatabase());
 
 	}
 
@@ -420,6 +488,8 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
     }
 
 
+
+
     /**
      * Setup event handlers and bind variables to values from xml
      */
@@ -432,7 +502,30 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 				changeUI(1);
 				/* get initial metadata and put in a hashmap */
 				if ( putMetaData() ) {
-					new Thread(mWorker).start();
+
+					final Thread workerThread = new Thread(mWorker);
+                    workerThread .start();
+
+                    /* make the thread timeout after a certain time */
+                    mCountDownTimer = new CountDownTimer(5000, 1000)
+                    {
+                        @Override
+                        public void onTick(long millisUntilFinished)
+                        {}
+
+                        @Override
+                        public void onFinish()
+                        {
+                            workerThread.interrupt();
+                            Log.d(TAG, "countdown finished"); //$NON-NLS-1$
+                            showPopup("", 1);
+                            //playSound(2);
+                        }
+                    };
+                    mCountDownTimer.start();
+
+
+
 					playSound(0);
 
 				} else changeUI(0);
@@ -441,6 +534,15 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 			}
 		});
 
+        /* set up listener for settings button */
+        mBtnSettings.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPopup("", 2);
+
+            }
+        });
+
 
 
 	}
@@ -448,7 +550,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	private int getRandomColor(){
 		Random random = new Random();
 		int brightness = 100;
-		return Color.argb(255, brightness + random.nextInt(255 - brightness), brightness + random.nextInt(255- brightness), brightness + random.nextInt(255 - brightness));
+		return Color.argb(255, brightness + random.nextInt(255 - brightness), brightness + random.nextInt(255 - brightness), brightness + random.nextInt(255 - brightness));
 	}
 
 	/** get the metadata
@@ -464,6 +566,13 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		/* store data to be animated in the ui thread animator */
 		//final HashMap<String,Integer> toAnimate = new HashMap<>();
 
+        // get the MAC address of the router
+        WifiManager wifiMgr = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+        //String wirelessNetworkName = wifiInfo.getSSID();
+        String wirelessAccessPtMACAddr = wifiInfo.getBSSID();
+        data.put(FeedReaderDbHelper.ACCESSPT_STRING, wirelessAccessPtMACAddr);
+
 
 		/* decide network type */
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -474,7 +583,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		/* check if wi fi is on */
 		NetworkInfo mWiFi = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
 		if (!mWiFi.isConnected()) {
-			showPopup( "WIFI NOT CONNECTED" );
+			showPopup( "WIFI NOT CONNECTED", 0 );
 			playSound(2);
 			return false;
 		}
@@ -483,34 +592,40 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		/* store data in hashmap */
 
 		/* specify the file that was downloaded */
-		data.put(DOWNLOAD_STRING, download_file_url);
+		data.put(FeedReaderDbHelper.DOWNLOAD_STRING, download_file_url);
 
 		/* update gps location */
 		updateLocation();
-		data.put(LAT_STRING, mLatitude+"");
-		data.put(LONG_STRING, mLongitude + "");
-		data.put(ALT_STRING, mAltitude + "");
+		data.put(FeedReaderDbHelper.LAT_STRING, mLatitude + "");
+		data.put(FeedReaderDbHelper.LONG_STRING, mLongitude + "");
+		data.put(FeedReaderDbHelper.ALT_STRING, mAltitude + "");
 
 		/* get the time */
-		data.put(TIMESTAMP_STRING, getTimeStamp());
-		data.put(TIMESTAMPFMT_STRING, TIMESTAMP_FORMAT);
+		data.put(FeedReaderDbHelper.TIMESTAMP_STRING, getTimeStamp());
+		data.put(FeedReaderDbHelper.TIMESTAMPFMT_STRING, TIMESTAMP_FORMAT);
 
 		/* get the mac addr */
-		data.put(MAC_STRING, getMacAddr());
+		data.put(FeedReaderDbHelper.MAC_STRING, getMacAddr());
 
 		/* name of network */
 		String network = info.getExtraInfo().replace('"', ' ').trim();
-		data.put(NETWORK_STRING, network);
+		data.put(FeedReaderDbHelper.NETWORK_STRING, network);
+
+
+
 
 		/* prepare data for user */
 		//prepareData();
 
+        /* store the location provider (either network or gps) */
+        data.put( FeedReaderDbHelper.LOCATIONPROV_STRING, mLastLocation.getProvider());
+
 		/* give the data a unique id */
-		data.put(ID_STRING, UUID.randomUUID() + "");
+		data.put(FeedReaderDbHelper.ID_STRING, UUID.randomUUID() + "");
 
 
 		if (!isAllowedNetwork(network)) {
-			showPopup( network );
+			showPopup( network, 0 );
 			playSound(2);
 			return false;
 		}
@@ -538,12 +653,11 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
     /* add empty textviews to use as spacers */
     private void populateScrollView(){
         //mTopScroller.setSmoothScrollingEnabled(true);
+        mSettingsBtnScroller = (HorizontalScrollView)findViewById(R.id.btn_settings_scroller);
 
         mTopScroller.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
 
             int lastScrollY = mTopScroller.getScrollY();
-
-
 
             @Override
             public void onScrollChanged() {
@@ -552,6 +666,24 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
                 lastScrollY = mTopScroller.getScrollY();
                 mTopScroller.scrollTo(mTopScroller.getScrollX(), mTopScroller.getScrollY() + deltaY);
                 mScroller.scrollTo(mScroller.getScrollX(),  mScroller.getScrollY() + deltaY);
+
+                /* percent of the whole scoller scrolled */
+                /* expand views apart as you scroll up */
+                //float percent_scrolled = (float)deltaY / (float)mScroller.getMaxScrollAmount();
+                float percent_scrolled = (float) mTopScroller.getScrollY()/ (float)mScroller.getMaxScrollAmount();
+                int goalHeight = (int) ((float)screenDimens.y / 5f);
+                float multiplier = goalHeight - (screenDimens.y * ratioHeightSpacer) ;
+                int newminHeight = (int) ((screenDimens.y * ratioHeightSpacer) + (percent_scrolled * multiplier));
+
+                /* scroll settings button in depending on location of start button */
+                mSettingsBtnScroller.scrollTo((int) (percent_scrolled * mSettingsBtnScroller.getMaxScrollAmount()), mSettingsBtnScroller.getScrollY());
+
+
+                downspeed_scroller.setMinimumHeight(newminHeight);
+                network_scroller.setMinimumHeight(newminHeight);
+                ping_scroller.setMinimumHeight(newminHeight);
+
+
 
 
                 //int scrollY = mTopScroller.getScrollY(); //for verticalScrollView
@@ -641,19 +773,25 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 				final SpeedInfo info2 = (SpeedInfo) msg.obj;
 
+                /* play a sound depending on whether complete or not */
+                if ( msg.arg2 == 1){
+                    playSound(1);
+                } else if (msg.arg2 == 0){
+                    playSound(2);
+                }
+
 				/* change the ui and play a sound */
 				changeUI(0);
-				playSound(1);
 
 				/* store data in hashmap */
 
 				/* download speed and total bytes downloaded */
-				data.put(SPEED_STRING, info2.kilobits + "");
-				data.put(BYTES_STRING, msg.arg1 + "");
+				data.put(FeedReaderDbHelper.SPEED_STRING, info2.kilobits + "");
+				data.put(FeedReaderDbHelper.BYTES_STRING, msg.arg1 + "");
 
 				/* connection time in ms */
-				data.put(CONNTIME_STRING, mConnectionTime + "");
-				data.put(CONNTIMEUNIT_STRING, "ms");
+				data.put(FeedReaderDbHelper.CONNTIME_STRING, mConnectionTime + "");
+				data.put(FeedReaderDbHelper.CONNTIMEUNIT_STRING, "ms");
 
 
 				/* prepare data for user */
@@ -665,20 +803,33 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 				//mResultViewer.setText(result);
 
-				/* post the data to the server */
-				try {
-                    Toast toast = Toast.makeText( getApplicationContext(), "Posting to server...", Toast.LENGTH_LONG);
-                    toast.show();
-                    ServerRequestor.post(SERVER_URL, data ) ;
-                    toast.setText("Post Successful!");
-                    toast.show();
+                /* store data in db */
+                db.saveRecord(data);
+                String uuid = data.get(FeedReaderDbHelper.ID_STRING);
+                //removeRecord(uuid);
 
-				} catch (IOException e) {
-                    Toast toast = Toast.makeText( getApplicationContext(), "Failed to contact server", Toast.LENGTH_LONG);
+
+                Message message = Message.obtain(null, DatabaseManagerService.MSG_RECORD_ADDED);
+                try {
+                    mServiceMessenger.send(message);
+                } catch (RemoteException e) {
                     e.printStackTrace();
-                    toast.show();
                 }
 
+				/* post the data to the server */
+                String response = "";
+//				try {
+//                    Toast toast = Toast.makeText( getApplicationContext(), "Posting to server...", Toast.LENGTH_LONG);
+//                    toast.show();
+//                    response = ServerRequestor.post(SERVER_URL, data, db ) ;
+//                    toast.setText("Post Successful!");
+//                    toast.show();
+//
+//				} catch (IOException e) {
+//                    Toast toast = Toast.makeText( getApplicationContext(), "Failed to contact server", Toast.LENGTH_LONG);
+//                    e.printStackTrace();
+//                    toast.show();
+//                }
 
 				break;
 			default:
@@ -695,7 +846,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		//NOTE order matters! the text will appear in the scroller in the reverse order of the code
 
         // download speed
-        String z = data.get(SPEED_STRING) + "bytes/sec";
+        String z = data.get(FeedReaderDbHelper.SPEED_STRING) + "bytes/sec";
         TextView tv;
 		textAndColor.put(z, getResources().getColor(R.color.downSpeedTextColor));
 		textAnim.add(z);
@@ -706,7 +857,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 
 		//connection time
-		z = "Ping: " + data.get(CONNTIME_STRING) + data.get(CONNTIMEUNIT_STRING);
+		z = "Ping: " + data.get(FeedReaderDbHelper.CONNTIME_STRING) + data.get(FeedReaderDbHelper.CONNTIMEUNIT_STRING);
 		textAndColor.put(z, getResources().getColor(R.color.PingTextColor));
 		textAnim.add(z);
         tv = ((TextView)((RelativeLayout) ping_scroller.getChildAt(0)).getChildAt(0));
@@ -715,7 +866,7 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
         scrollersToAnimate.add(ping_scroller);
 
 		//network name
-		z = data.get(NETWORK_STRING);
+		z = data.get(FeedReaderDbHelper.NETWORK_STRING);
 		textAndColor.put(z, getResources().getColor(R.color.networkTextColor));
 		textAnim.add(z);
         tv = ((TextView)((RelativeLayout) network_scroller.getChildAt(0)).getChildAt(0));
@@ -737,95 +888,257 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	}
 
 
-	/**
-	 * Our Slave worker that does actually all the work
-	 */
-	private final Runnable mWorker=new Runnable(){
-		
-		@Override
-		public void run() {
-			InputStream stream=null;
-			try {
-				int bytesIn=0;
+    /**
+     * Our Slave worker that does actually all the work
+     */
+    private final Worker mWorker = new Worker();
+
+
+    class Worker implements Runnable, Callable {
+
+        public static final String TAG_WORKER = "WORKER";
+
+        @Override
+        public Object call() throws Exception {
+            return null;
+        }
+
+        @Override
+        public void run() {
+            InputStream stream=null;
+            try {
+                int bytesIn=0;
 
 				/* the file to be downloaded */
-				//String downloadFileUrl="http://www.kenrockwell.com/contax/images/g2/examples/31120037-5mb.jpg";
-				long startCon = System.currentTimeMillis();
-				URL url = new URL(download_file_url);
-				URLConnection con=url.openConnection();
-				con.setUseCaches(false);
-				long connectionLatency = System.currentTimeMillis()- startCon;
-				stream = con.getInputStream();
+                //String downloadFileUrl="http://www.kenrockwell.com/contax/images/g2/examples/31120037-5mb.jpg";
+                long startCon = System.currentTimeMillis();
+                URL url = new URL(download_file_url);
+                URLConnection con=url.openConnection();
+                con.setUseCaches(false);
+                long connectionLatency = System.currentTimeMillis()- startCon;
+                stream = con.getInputStream();
 
-				EXPECTED_SIZE_IN_BYTES = con.getContentLength();
+                /* set the timeout */
+                con.setReadTimeout(100);
 
-				Message msgUpdateConnection=Message.obtain(mHandler, MSG_UPDATE_CONNECTION_TIME);
-				msgUpdateConnection.arg1=(int) connectionLatency;
-				mHandler.sendMessage(msgUpdateConnection);
 
-				long start=System.currentTimeMillis();
-				int currentByte = 0;
-				long updateStart=System.currentTimeMillis();
-				long updateDelta=0;
-				int  bytesInThreshold=0;
+                EXPECTED_SIZE_IN_BYTES = con.getContentLength();
+
+                Message msgUpdateConnection=Message.obtain(mHandler, MSG_UPDATE_CONNECTION_TIME);
+                msgUpdateConnection.arg1=(int) connectionLatency;
+                mHandler.sendMessage(msgUpdateConnection);
+
+                long start=System.currentTimeMillis();
+                int currentByte = 0;
+                long updateStart=System.currentTimeMillis();
+                long updateDelta=0;
+                int  bytesInThreshold=0;
 
 
 				/* get max bytes to read
 				* There may not be this amount of bytes available to read there
 				* are rarely more available
 				*/
-				int bytesToRead = 1024;
-				byte[] readBytes = new byte[bytesToRead];
+                int bytesToRead = 1024;
+                byte[] readBytes = new byte[bytesToRead];
 
-				while((currentByte = stream.read(readBytes))!= -1){
-					//bytesIn++;
-					bytesIn += currentByte;
-					bytesInThreshold+=currentByte;
-					if(updateDelta >= UPDATE_THRESHOLD){
-						int progress=(int)((bytesIn/(double)EXPECTED_SIZE_IN_BYTES)*100);
-						Message msg=Message.obtain(mHandler, MSG_UPDATE_STATUS, calculate(updateDelta, bytesInThreshold));
-						msg.arg1=progress;
-						msg.arg2=bytesIn;
-						mHandler.sendMessage(msg);
-						//Reset
-						updateStart=System.currentTimeMillis();
-						bytesInThreshold=0;
+                while((currentByte = stream.read(readBytes))!= -1){
 
-					}
+                    if (Thread.interrupted()) {
+                        Log.d(TAG_WORKER, "thread interupted. returning.");
+                        /* send message complete even though its not */
+                        Long downloadTime=(System.currentTimeMillis()-start);
+                        Message msg=Message.obtain(mHandler, MSG_COMPLETE_STATUS, calculate(downloadTime, bytesIn));
+                        msg.arg1=bytesIn;
+
+                        /* communicate this is not complete */
+                        msg.arg2 = 0;
+                        mHandler.sendMessage(msg);
+
+
+                        return;
+                    }
+
+                    //bytesIn++;
+                    bytesIn += currentByte;
+                    bytesInThreshold+=currentByte;
+                    if(updateDelta >= UPDATE_THRESHOLD){
+                        int progress=(int)((bytesIn/(double)EXPECTED_SIZE_IN_BYTES)*100);
+                        Message msg=Message.obtain(mHandler, MSG_UPDATE_STATUS, calculate(updateDelta, bytesInThreshold));
+                        msg.arg1=progress;
+                        msg.arg2=bytesIn;
+                        mHandler.sendMessage(msg);
+                        //Reset
+                        updateStart=System.currentTimeMillis();
+                        bytesInThreshold=0;
+
+                    }
 					/* reassign vars */
-					bytesToRead = Math.max(stream.available(), 1024);
-					readBytes = new byte[bytesToRead];
-					updateDelta = System.currentTimeMillis() - updateStart;
-				}
+                    bytesToRead = Math.max(stream.available(), 1024);
+                    readBytes = new byte[bytesToRead];
+                    updateDelta = System.currentTimeMillis() - updateStart;
+                }
 
-				long downloadTime=(System.currentTimeMillis()-start);
+                long downloadTime=(System.currentTimeMillis()-start);
 
-				//Prevent ArithmeticException
-				if(downloadTime==0){
-					downloadTime=1;
-				}
+                mCountDownTimer.cancel();
 
-				Message msg=Message.obtain(mHandler, MSG_COMPLETE_STATUS, calculate(downloadTime, bytesIn));
-				msg.arg1=bytesIn;
-				mHandler.sendMessage(msg);
-			} 
-			catch ( MalformedURLException e ) {
-				Log.e(TAG, e.getMessage());
-			} catch (IOException e) {
-				Log.e(TAG, e.getMessage());
 
-			}finally{
-				try {
-					if(stream!=null){
-						stream.close();
-					}
-				} catch (IOException e) {
-					//Suppressed
-				}
-			}
+                //Prevent ArithmeticException
+                if(downloadTime==0){
+                    downloadTime=1;
+                }
 
-		}
-	};
+                Message msg=Message.obtain(mHandler, MSG_COMPLETE_STATUS, calculate(downloadTime, bytesIn));
+                msg.arg2 = 1;
+                msg.arg1=bytesIn;
+                mHandler.sendMessage(msg);
+            }
+            catch ( MalformedURLException e ) {
+
+                Log.e(TAG, e.getMessage());
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+
+            } finally{
+                try {
+                    if(stream!=null){
+                        stream.close();
+                    }
+                } catch (IOException e) {
+                    //Suppressed
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+//            mWorker=new Runnable(){
+//
+//		@Override
+//		public void run() {
+//			InputStream stream=null;
+//			try {
+//				int bytesIn=0;
+//
+//				/* the file to be downloaded */
+//				//String downloadFileUrl="http://www.kenrockwell.com/contax/images/g2/examples/31120037-5mb.jpg";
+//				long startCon = System.currentTimeMillis();
+//				URL url = new URL(download_file_url);
+//				URLConnection con=url.openConnection();
+//				con.setUseCaches(false);
+//				long connectionLatency = System.currentTimeMillis()- startCon;
+//				stream = con.getInputStream();
+//
+//                /* set the timeout */
+//                con.setReadTimeout(100);
+//
+//
+//                EXPECTED_SIZE_IN_BYTES = con.getContentLength();
+//
+//				Message msgUpdateConnection=Message.obtain(mHandler, MSG_UPDATE_CONNECTION_TIME);
+//				msgUpdateConnection.arg1=(int) connectionLatency;
+//				mHandler.sendMessage(msgUpdateConnection);
+//
+//				long start=System.currentTimeMillis();
+//				int currentByte = 0;
+//				long updateStart=System.currentTimeMillis();
+//				long updateDelta=0;
+//				int  bytesInThreshold=0;
+//
+//
+//				/* get max bytes to read
+//				* There may not be this amount of bytes available to read there
+//				* are rarely more available
+//				*/
+//				int bytesToRead = 1024;
+//				byte[] readBytes = new byte[bytesToRead];
+//
+//				while((currentByte = stream.read(readBytes))!= -1){
+//					//bytesIn++;
+//					bytesIn += currentByte;
+//					bytesInThreshold+=currentByte;
+//					if(updateDelta >= UPDATE_THRESHOLD){
+//						int progress=(int)((bytesIn/(double)EXPECTED_SIZE_IN_BYTES)*100);
+//						Message msg=Message.obtain(mHandler, MSG_UPDATE_STATUS, calculate(updateDelta, bytesInThreshold));
+//						msg.arg1=progress;
+//						msg.arg2=bytesIn;
+//						mHandler.sendMessage(msg);
+//						//Reset
+//						updateStart=System.currentTimeMillis();
+//						bytesInThreshold=0;
+//
+//					}
+//					/* reassign vars */
+//					bytesToRead = Math.max(stream.available(), 1024);
+//					readBytes = new byte[bytesToRead];
+//					updateDelta = System.currentTimeMillis() - updateStart;
+//				}
+//
+//				long downloadTime=(System.currentTimeMillis()-start);
+//
+//				//Prevent ArithmeticException
+//				if(downloadTime==0){
+//					downloadTime=1;
+//				}
+//
+//				Message msg=Message.obtain(mHandler, MSG_COMPLETE_STATUS, calculate(downloadTime, bytesIn));
+//				msg.arg1=bytesIn;
+//				mHandler.sendMessage(msg);
+//			}
+//			catch ( MalformedURLException e ) {
+//
+//                Log.e(TAG, e.getMessage());
+//            } catch (IOException e) {
+//                Log.e(TAG, e.getMessage());
+//
+//            } finally{
+//				try {
+//					if(stream!=null){
+//						stream.close();
+//					}
+//				} catch (IOException e) {
+//					//Suppressed
+//				}
+//			}
+//
+//		}
+//	};
+
+    /**initSettingsPopup
+     *      initializes the popup for settings
+     */
+    private void initSettingsPopup(){
+        /* get the viewGroup to be displayed on the popup */
+        LayoutInflater inflater = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        RelativeLayout layout = (RelativeLayout) inflater.inflate(R.layout.settingspopupwindow, null);
+
+        /* make popupwindow the appropriate size */
+        int width = screenDimens.x;
+        int height = screenDimens.y;
+        settingsPwindo = new PopupWindow(layout, width - 100, height/ 2, true);
+
+        /* aniamation */
+        pwindo.setAnimationStyle(R.style.Animation);
+
+        /* create onclick listener to close the popup */
+        OnClickListener cl = new OnClickListener() {
+
+            @Override
+            public void onClick(View arg0) {
+                // TODO Auto-generated method stub
+                settingsPwindo.dismiss();
+                playSound(4);
+            }
+        };
+
+		/* make so clicking on the popup or circular_button_background closes the window */
+        layout.setOnClickListener(cl);
+    }
 
 	/** initPopup
 	 * 		set up the popup view for later use
@@ -860,15 +1173,15 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 		layout.setOnClickListener(cl);
 
 		/* map the settings button */
-		Button btn_settings = (Button)layout.findViewById(R.id.settings_btn);
-		btn_settings.setOnClickListener(new OnClickListener() {
-			@Override
-			public void onClick(View v) {
+        Button btn_settings = (Button) layout.findViewById(R.id.settings_btn);
+        btn_settings.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
 				/* go to WIFI settings */
-				startActivityForResult(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS), 0);
-			}
-		});
+                startActivityForResult(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS), 0);
+            }
+        });
 	}
 
 
@@ -876,20 +1189,37 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 	 *
 	 * @param badNetwork the name of the network currently connected to
 	 */
-	private void showPopup( String badNetwork ){
+	private void showPopup( String badNetwork, int mode ){
 
-		/* get the viewGroup to be displayed on the popup */
-		RelativeLayout layout = (RelativeLayout) pwindo.getContentView();
+	    /* get the viewGroup to be displayed on the popup */
+        RelativeLayout layout = (RelativeLayout) pwindo.getContentView();
 
-		/* set the error message on the popup */
-		TextView errorMessage = (TextView) layout.findViewById(R.id.errorMessage);
-		errorMessage.setText("Invalid network: " + badNetwork + ". Valid networks: WiOfTheTiger, WiOfTheTiger-Employee.");
+        /* set the error message on the popup */
+        TextView errorMessage = (TextView) layout.findViewById(R.id.errorMessage);
+
+        if ( mode == 0 ) {
+
+            errorMessage.setText("Invalid network: " + badNetwork + ". Valid networks: WiOfTheTiger, WiOfTheTiger-Employee.");
+
+            /* display popup + play sound*/
+            pwindo.showAtLocation(layout, Gravity.CENTER, 0, 0);
+        } else if ( mode == 1 ){
+            errorMessage.setText("ENDING EARLY.Bandwidth is too low to complete the test. Note: data will still be sent to server");
+            Button wifiSettings = (Button)layout.findViewById(R.id.settings_btn);
+            wifiSettings.setVisibility(View.GONE);
+
+            /* display popup + play sound*/
+            pwindo.showAtLocation(layout, Gravity.CENTER, 0, 0);
+        } else if (mode == 2){
+            layout = (RelativeLayout) settingsPwindo.getContentView();
+            TextView records = (TextView) layout.findViewById(R.id.records_in_db);
+            records.setText("# RECORDS IN LOCAL DB: " + db.getRecordCount());
+            settingsPwindo.showAtLocation(layout, Gravity.CENTER, 0, 0);
+
+        }
 
 
-		/* display popup */
-		pwindo.showAtLocation(layout, Gravity.CENTER, 0, 0);
-
-		playSound(3);
+        playSound(3);
 
 	}
 
@@ -917,63 +1247,83 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
 
 	/* get the most current location */
 	public void updateLocation(){
-		mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-		if (mLastLocation != null) {
+		mLastLocation = mGPSTRacker.getLocation();
 
-			mLatitude = mLastLocation.getLatitude();
-			mLongitude = mLastLocation.getLongitude();
+        Log.d(TAG, "updateLocation. " + "lat: " + mLastLocation.getLatitude() + ", " +
+                "lon: " + mLastLocation.getLongitude() + " prov: " +
+                mLastLocation.getProvider() + ", acc: " + mLastLocation.getAccuracy());
 
-            mAltitude = mLastLocation.getAltitude();
-		} else {
-			Toast toast = Toast.makeText(SpeedTestLauncher.this, getResources().getString(R.string.location_unavailable_message), Toast.LENGTH_SHORT);
-			System.out.println("last location not available");
-			toast.show();
-		}
-	}
-
-	@Override
-	public void onConnected(Bundle bundle) {
-		System.out.println("Connected!");
-		Toast toast = Toast.makeText(SpeedTestLauncher.this, getResources().getString(R.string.location_connected_message), Toast.LENGTH_SHORT);
-		toast.show();
+        mLatitude = mLastLocation.getLatitude();
+        mLongitude = mLastLocation.getLongitude();
+        mAltitude = mLastLocation.getAltitude();
 
 
 	}
+
+
 
 	@Override
 	protected void onStart() {
+        Log.d(TAG, "onStart");
+
 		super.onStart();
-		mGoogleApiClient.connect();
+
+        startMyService();
+        bindMyService();
+
 	}
 
 	@Override
 	protected void onStop() {
-		super.onStop();
-		if (mGoogleApiClient.isConnected()) {
-			mGoogleApiClient.disconnect();
-		}
-	}
+        Log.d(TAG, "onStop");
+
+        super.onStop();
+        unbindMyService();
+        stopMyService();
 
 
-	@Override
-	public void onConnectionSuspended(int i) {
 
 	}
 
-	@Override
-	public void onConnectionFailed(ConnectionResult connectionResult) {
+    /* for binding to the service */
+    /* Bind the the speech recog service */
+    private void bindMyService(){
+        Intent i = new Intent(this, DatabaseManagerService.class);
+        i.putExtra("receiver", resultReceiver);
 
-	}
+        bindService(i, mServiceConnection, mBindFlag);
+    }
+    /* unBind the the speech recog service */
+    private void unbindMyService(){
+        if (mServiceMessenger != null)
+        {
+            unbindService(mServiceConnection);
+            mServiceMessenger = null;
+        }
+    }
 
-	/* build a googleApiClient */
-	protected synchronized void buildGoogleApiClient() {
-		mGoogleApiClient = new GoogleApiClient.Builder( this )
-				.addConnectionCallbacks( this )
-				.addOnConnectionFailedListener( this )
-				.addApi( LocationServices.API )
-				.build();
-	}
+    /* stop and unbind with the service */
+    private void stopMyService(){
 
+        Intent service = new Intent(SpeedTestLauncher.this, DatabaseManagerService.class);
+        SpeedTestLauncher.this.stopService(service);
+    }
+
+    /* start the continuous speech service and bind to it */
+    private void startMyService(){
+
+        /* start the service */
+        Intent service = new Intent(SpeedTestLauncher.this, DatabaseManagerService.class);
+        /* send the reciever to the service */
+        service.putExtra("receiver", resultReceiver);
+        //service.putExtra("score", currentScore);
+        mBindFlag = Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH ? 0 : Context.BIND_ABOVE_CLIENT;
+        SpeedTestLauncher.this.startService(service);
+
+        /* bind to the service */
+        //bindToService();
+
+    }
 
 	/**
 	 * Transfer Object
@@ -1023,6 +1373,31 @@ public class SpeedTestLauncher extends Activity implements GoogleApiClient.Conne
             horizontalScrollView.startAnimation(scrollerFlyIn);
 		}
 	}
+
+    /* update ui with results
+    */
+    class MyResultReceiver extends ResultReceiver
+    {
+        public MyResultReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            if(resultCode == 100){
+                //runOnUiThread(new UpdateUI(resultData.getString("start")));
+            }
+            else if(resultCode == 200){
+                //runOnUiThread(new UpdateUI(resultData.getString("end")));
+            }
+            else{
+                //currentScore = resultData.getInt("score");
+                //badWordQeue.addAll( resultData.getStringArrayList("badwords") );
+                //runOnUiThread(new UpdateUI(resultData.getInt("score") + ""));
+            }
+        }
+    }
 
 
 }

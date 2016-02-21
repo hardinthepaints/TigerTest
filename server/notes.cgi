@@ -16,6 +16,8 @@ cgitb.enable()
 #table name
 tableName = "appresults"
 
+
+
 #list of column names in the table, also these are the keys 
 columnNames = [
 	("downSpeed", "REAL"), 
@@ -23,14 +25,17 @@ columnNames = [
 	("latitude","REAL"), 
 	("longitude","REAL"), 
 	("altitude","REAL"), 
+	("locationProvider", "TEXT"),
 	("timeStamp", "TEXT"),
 	("timeStampFmt", "TEXT"),
 	("MACAddr", "TEXT" ),
 	("network", "TEXT" ),
 	("connectionTime", "REAL"),
-	("connectionTimeUnit", "REAL"),
+	("connectionTimeUnit", "TEXT"),
 	("fileDownloaded", "TEXT"),
-	("uuid", "TEXT PRIMARY KEY")]
+	("wirelessAccessPointMAC", "TEXT"),
+	("uuid", "TEXT PRIMARY KEY")
+	]
 	
 #attempt to execute a statement, write errors to output.txt
 def executeSqliteStatement( statement, insertTuple ):
@@ -38,11 +43,13 @@ def executeSqliteStatement( statement, insertTuple ):
 		#execute and commit
 		c.execute( statement, insertTuple )
 		db.commit()
+		return True
 	except sqlite3.Error as er:
 		f.write("ERROR WITH SQLITE3 \n" )
 		f.write( er.message )
 		f.write("statement: " + statement)
 		f.write( '\n' )
+		return False
 
 
 
@@ -67,11 +74,8 @@ fields = None
 # Create instance of FieldStorage 
 try:
 	form = cgi.FieldStorage()
-	fields = form.getlist()
-	data = form.value
-	decoded_data = urllib.unquote(data).decode('utf8')
-	json_data = json.loads(decoded_data)
-	flag = True;
+	#fields = form.getlist()
+	#data = form.value
 except:
 	print "Content-type:text/html\r\n\r\n"
 	print "This cgi script is only for the Android app TigerTest."
@@ -103,6 +107,8 @@ if form:
 			for name in columnNames:
 				if name[0] in form:
 					insertStatement += name[0] + ", "
+				else:
+					f.write("\n Not Present: " + name[0] + "\n")
 			insertStatement = insertStatement[:-2]
 			insertStatement += ") VALUES("
 
@@ -121,7 +127,16 @@ if form:
 			insertStatement += ")"
 
 			#attempt to execute statement
-			executeSqliteStatement( insertStatement, insertTuple )
+			if executeSqliteStatement( insertStatement, insertTuple ):
+
+				print "Content-type:text/html\r\n\r\n"
+				print "{added:" + uuid + "}"
+			else:
+				print "Content-type:text/html\r\n\r\n"
+				print "{added:" + uuid + "}"
+				
+
+				
 
 
 			f.write("executed insert statement: \n")	
@@ -145,6 +160,8 @@ f.close()
 
 print "Content-type:text/html\r\n\r\n"
 print "Got the note!"
+
+
 
 
 

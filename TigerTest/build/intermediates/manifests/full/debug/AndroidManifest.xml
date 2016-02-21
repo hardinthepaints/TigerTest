@@ -36,6 +36,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name="com.xanderfehsenfeld.tigertest.LocalDB.DatabaseManagerService"
+            android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name="com.xanderfehsenfeld.tigertest.GPS.MyGPSLocationService"
+            android:enabled="true"
+            android:exported="false" />
         <!-- Include the AdActivity and InAppPurchaseActivity configChanges and themes. -->
         <activity
             android:name="com.google.android.gms.ads.AdActivity"

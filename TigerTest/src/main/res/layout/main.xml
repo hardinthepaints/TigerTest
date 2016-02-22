@@ -23,6 +23,8 @@
     >
 
 
+
+
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
@@ -74,6 +76,7 @@
                     android:id="@+id/topContainerA"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:background="@drawable/gradient_black_to_clear"
                     >
 
 
@@ -135,6 +138,8 @@
                 android:layout_height="fill_parent" />
         </RelativeLayout>
 
+
+
         <HorizontalScrollView
             android:scrollbars="none"
             android:id ="@+id/btn_settings_scroller"
@@ -154,7 +159,7 @@
             >
             <Button
                 android:id ="@+id/btn_settings"
-                android:background="@drawable/rounded_button_background"
+                android:background="@drawable/settings_popup_background"
                 android:layout_width="100dp"
                 android:layout_height="50dp"
                 android:text="Settings"
@@ -167,9 +172,20 @@
         </LinearLayout>
         </HorizontalScrollView>
 
+        <RelativeLayout
+            android:visibility="gone"
+            android:id="@+id/grey_out"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/greyOver">
+
+        </RelativeLayout>
+
 
 
     </RelativeLayout>
+
+
 
 
 

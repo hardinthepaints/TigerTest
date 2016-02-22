@@ -47,6 +47,7 @@
     <color name="background_material_light">#ffeeeeee</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/res/values/colors.xml -->
     <eat-comment/>
+    <color name="bloodRed">#ff0400</color>
     <color name="borderPrimary">#8f00fc</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
@@ -95,6 +96,7 @@
     <eat-comment/>
     <color name="downSpeedTextColor">#ee21b300</color>
     <color name="fireLit">#ff9100</color>
+    <color name="greyOver">#5b065300</color>
     <!-- From: file:/Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/res/values/values.xml -->
     <eat-comment/>
     <color name="highlighted_text_material_dark">#6680cbc4</color>

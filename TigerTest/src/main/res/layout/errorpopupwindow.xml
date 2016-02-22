@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/abc_action_bar_stacked_max_height"
+    android:background="@drawable/error_popup_background"
+    >
+
+    <TextView
+        android:textColor="@color/textColorPrimary"
+        android:layout_margin="50dp"
+        android:textSize="@dimen/abc_text_size_large_material"
+        android:layout_centerInParent="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="must be connected to wiofhtetiger!"
+        android:id="@+id/errorMessage"
+        />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/errorMessage">
+        <Button
+            android:background="@drawable/error_popup_background"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="WIFI SETTINGS"
+            android:id="@+id/settings_btn"
+            android:layout_gravity="left|center_vertical"
+            android:textColor="@color/textColorPrimary"
+            />
+
+
+        <Button
+            android:background="@drawable/error_popup_background"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="CLOSE"
+            android:textColor="@color/textColorPrimary"
+            android:id="@+id/close_popup_btn"
+            android:layout_below="@+id/errorMessage"
+            android:layout_gravity="right|center_vertical" />
+
+
+    </LinearLayout>
+
+</RelativeLayout>

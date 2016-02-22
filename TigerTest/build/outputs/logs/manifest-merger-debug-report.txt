@@ -1,6 +1,6 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:2:1-40:12
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:2:1-39:12
 	package
 		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:3:7-47
 		INJECTED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml
@@ -14,7 +14,7 @@ ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/Andr
 	xmlns:android
 		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:2:11-69
 application
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:6:5-24:19
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:6:5-23:19
 MERGED from [com.google.android.gms:play-services:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services/8.3.0/AndroidManifest.xml:19:5-20
 MERGED from [com.google.android.gms:play-services-ads:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/8.3.0/AndroidManifest.xml:24:5-32:19
 MERGED from [com.google.android.gms:play-services-basement:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/8.3.0/AndroidManifest.xml:20:5-24:19
@@ -113,42 +113,34 @@ MERGED from [com.android.support:support-v4:22.2.0] /Users/Xander/AndroidStudioP
 		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:6:48-80
 	android:icon
 		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:6:18-47
-activity#com.xanderfehsenfeld.tigertest.SpeedTestLauncher
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:7:9-14:20
-	android:label
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:9:19-51
-	android:theme
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:8:13-77
-	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:7:19-82
-intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:10:13-13:29
-action#android.intent.action.MAIN
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:11:17-69
-	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:11:25-66
-category#android.intent.category.LAUNCHER
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:12:17-77
-	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:12:27-74
 service#com.xanderfehsenfeld.tigertest.LocalDB.DatabaseManagerService
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:16:9-19:48
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:9:9-12:48
 	android:enabled
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:18:13-35
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:11:13-35
 	android:exported
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:19:13-37
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:12:13-37
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:17:13-59
-service#com.xanderfehsenfeld.tigertest.GPS.MyGPSLocationService
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:20:9-23:48
-	android:enabled
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:22:13-35
-	android:exported
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:23:13-37
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:10:13-59
+activity#com.xanderfehsenfeld.tigertest.SpeedTestLauncher
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:14:9-22:20
+	android:label
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:15:13-45
+	android:theme
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:16:13-77
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:21:13-53
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:14:19-52
+intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:18:13-21:29
+action#android.intent.action.MAIN
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:19:17-69
+	android:name
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:19:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:20:17-77
+	android:name
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:20:27-74
 uses-permission#android.permission.INTERNET
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:26:5-67
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:25:5-67
 MERGED from [com.google.android.gms:play-services-ads:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/8.3.0/AndroidManifest.xml:20:5-66
 MERGED from [com.google.android.gms:play-services-analytics:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/8.3.0/AndroidManifest.xml:21:5-67
 MERGED from [com.google.android.gms:play-services-appinvite:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-appinvite/8.3.0/AndroidManifest.xml:19:5-67
@@ -161,13 +153,13 @@ MERGED from [com.google.android.gms:play-services-measurement:8.3.0] /Users/Xand
 MERGED from [com.google.android.gms:play-services-wallet:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-wallet/8.3.0/AndroidManifest.xml:20:5-66
 MERGED from [com.google.android.gms:play-services-maps:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/8.3.0/AndroidManifest.xml:21:5-66
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:26:22-64
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:25:22-64
 uses-permission#android.permission.ACCESS_WIFI_STATE
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:27:5-76
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:26:5-76
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:27:22-73
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:26:22-73
 uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:28:5-79
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:27:5-79
 MERGED from [com.google.android.gms:play-services-ads:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/8.3.0/AndroidManifest.xml:21:5-78
 MERGED from [com.google.android.gms:play-services-analytics:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-analytics/8.3.0/AndroidManifest.xml:22:5-79
 MERGED from [com.google.android.gms:play-services-maps:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/8.3.0/AndroidManifest.xml:20:5-78
@@ -178,21 +170,21 @@ MERGED from [com.google.android.gms:play-services-measurement:8.3.0] /Users/Xand
 MERGED from [com.google.android.gms:play-services-nearby:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-nearby/8.3.0/AndroidManifest.xml:19:5-79
 MERGED from [com.google.android.gms:play-services-maps:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-maps/8.3.0/AndroidManifest.xml:20:5-78
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:28:22-76
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:27:22-76
 uses-permission#android.permission.ACCESS_FINE_LOCATION
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:29:5-79
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:28:5-79
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:29:22-76
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:28:22-76
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:30:5-80
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:29:5-80
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:30:22-78
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:29:22-78
 uses-permission#android.permission.VIBRATE
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:31:5-65
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:30:5-65
 	android:name
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:31:22-63
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:30:22-63
 uses-sdk
-ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:35:5-42
+ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:34:5-42
 MERGED from [com.google.android.gms:play-services:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services/8.3.0/AndroidManifest.xml:18:5-42
 MERGED from [com.google.android.gms:play-services-ads:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/8.3.0/AndroidManifest.xml:23:5-42
 MERGED from [com.google.android.gms:play-services-basement:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/8.3.0/AndroidManifest.xml:18:5-42
@@ -314,7 +306,7 @@ MERGED from [com.google.android.gms:play-services-base:8.3.0] /Users/Xander/Andr
 MERGED from [com.google.android.gms:play-services-basement:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-basement/8.3.0/AndroidManifest.xml:18:5-42
 MERGED from [com.android.support:support-v4:22.2.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.0/AndroidManifest.xml:20:5-43
 	android:minSdkVersion
-		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:35:15-40
+		ADDED from /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/src/main/AndroidManifest.xml:34:15-40
 activity#com.google.android.gms.ads.AdActivity
 ADDED from [com.google.android.gms:play-services-ads:8.3.0] /Users/Xander/AndroidStudioProjects/TigerTest/TigerTest/build/intermediates/exploded-aar/com.google.android.gms/play-services-ads/8.3.0/AndroidManifest.xml:26:9-29:64
 	android:configChanges

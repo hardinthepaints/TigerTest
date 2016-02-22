@@ -129,7 +129,7 @@ public class DatabaseManagerService extends Service
                     }
                     Log.d(TAG, toLog);
                     try {
-                        ServerRequestor.post(SpeedTestLauncher.SERVER_URL, db.getARecord(), db);
+                        interpretResponse( ServerRequestor.post(SpeedTestLauncher.SERVER_URL, db.getARecord(), db) );
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.e(TAG, e.getMessage());
@@ -146,7 +146,15 @@ public class DatabaseManagerService extends Service
 
     }
 
-//
+    /** interpretResponse
+     *      if the server returns a uuid, this function will remove that record from the db
+     * @param response the response string
+     */
+    private void interpretResponse(String response){
+            if (db.retrieveRecord(response) != null) db.removeRecord(response);
+    }
+
+
 
     @Override
     public void onDestroy()
@@ -185,6 +193,8 @@ public class DatabaseManagerService extends Service
         /* send an initial amount */
         return mServerMessenger.getBinder();
     }
+
+
 
     /* send results out */
     private void sendResults( String result ){

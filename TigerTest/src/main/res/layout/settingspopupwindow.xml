@@ -1,74 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/setting_layout_container"
-    android:layout_margin="@dimen/abc_action_bar_stacked_max_height"
-    android:background="@drawable/rounded_button_notpressed"
-    >
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/setting_layout_container"
+        android:layout_margin="@dimen/abc_action_bar_stacked_max_height"
+        android:background="@drawable/settings_popup_background"
+        >
 
     <TextView
+        android:id="@+id/settings_header"
         android:textColor="@color/PingTextColor"
-        android:layout_margin="50dp"
-        android:textSize="@dimen/abc_text_size_large_material"
-        android:layout_centerInParent="true"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Settings"
-        android:id="@+id/errorMessage"
-        />
-    <TextView
-        android:textColor="@color/PingTextColor"
-        android:layout_margin="50dp"
         android:gravity="center"
         android:textSize="@dimen/abc_text_size_large_material"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:text="Settings"
-        android:background="@drawable/rounded_button_notpressed"
+        android:background="@drawable/settings_popup_background"
+        android:layout_centerHorizontal="true"
         />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@+id/errorMessage">
-
-        <TextView
-            android:id="@+id/records_in_db"
-            android:gravity="center"
+        <ScrollView
+            android:layout_below="@id/settings_header"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="records in db:"/>
+            android:id= "@+id/settings_scroller">
+            <LinearLayout
+                android:gravity="top"
+                android:layout_marginRight="25dp"
+                android:layout_marginLeft="25dp"
+                android:id="@+id/settings_body_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:id="@+id/records_in_db"
+                    android:textColor="@color/textColorPrimary"
+                    android:text="records in db"
+                    android:layout_margin="10dp"
+                    android:gravity="center"/>
+                <ToggleButton
+                    android:layout_margin="10dp"
+                    android:layout_height="50dp"
+                    android:textOn="Test Mode: Continuous"
+                    android:textOff="Test Mode: Single"
+                    android:id="@+id/switch_continuous"
+                    android:layout_width="match_parent"
+                     />
+                <RelativeLayout
+                    android:layout_margin="10dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp">
+                    <SeekBar
+                        android:id="@+id/time_limit_seekbar"
+                        android:max="100"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                    <TextView
+                        android:textColor="@color/textColorPrimary"
+                        android:id="@+id/time_limit_tv"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="test time limit"
+                        android:gravity="center"/>
+                </RelativeLayout>
 
-        <!--<Button-->
-            <!--android:background="@drawable/rounded_button_background"-->
-            <!--android:layout_weight="1"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:text="WIFI SETTINGS"-->
-            <!--android:id="@+id/settings_btn"-->
-            <!--android:layout_gravity="left|center_vertical"-->
-            <!--android:textColor="@color/PingTextColor"-->
-            <!--/>-->
+            </LinearLayout>
+
+        </ScrollView>
+    </RelativeLayout>
 
 
-        <!--<Button-->
-            <!-- -->
-            <!--android:background="@drawable/rounded_button_background"-->
-            <!--android:layout_weight="1"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:text="CLOSE"-->
-            <!--android:textColor="@color/PingTextColor"-->
-            <!--android:id="@+id/close_popup_btn"-->
-            <!--android:layout_below="@+id/errorMessage"-->
-            <!--android:layout_gravity="right|center_vertical" />-->
 
-
-    </LinearLayout>
-
-</RelativeLayout>

@@ -19,13 +19,23 @@ public class MyDbWrapper {
 
     private static final String DB_TAG = "MyDbWrapper";
     public SQLiteDatabase db;
+
+
     public MyDbWrapper(SQLiteDatabase db){
         this.db = db;
 
         /* create the table */
+        //db.execSQL(FeedReaderDbHelper.SQL_DELETE_ENTRIES);
+        createTable();
+    }
+
+    public void dropTable(){
         db.execSQL(FeedReaderDbHelper.SQL_DELETE_ENTRIES);
+    }
+    public void createTable(){
         db.execSQL(FeedReaderDbHelper.SQL_CREATE_ENTRIES);
     }
+
 
     /** getRecordCount
      * @return the number of records
@@ -129,7 +139,7 @@ public class MyDbWrapper {
     /** retrieveRecord
      *      retrieve a row from the local db
      * @param uuid the id of the row
-     * @return the hashmap containing the record
+     * @return the hashmap containing the record, or null if record not in db
      */
     public HashMap<String, String> retrieveRecord(String uuid){
         /* we want every column */

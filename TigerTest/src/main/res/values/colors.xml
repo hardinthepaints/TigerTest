@@ -9,6 +9,8 @@
     <color name="backgroundPrimary">#ff4651</color>
     <color name="backgroundDark">#ee7b7b7b</color>
 
+    <color name="greyOver">#5b065300</color>
+
 
     <color name="networkTextColor">#00b6e4</color>
     <color name="downSpeedTextColor">#ee21b300</color>
@@ -16,4 +18,5 @@
     <color name="transParent">#00ffff08</color>
     <color name="deepGreen">#178900</color>
     <color name="fireLit">#ff9100</color>
+    <color name="bloodRed">#ff0400</color>
 </resources>

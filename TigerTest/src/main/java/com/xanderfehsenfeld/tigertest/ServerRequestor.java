@@ -152,7 +152,7 @@ public class ServerRequestor {
                     responseString = responseString.trim();
                 }
 
-                interpretResponse( responseString, db );
+                //interpretResponse( responseString, db );
                 return responseString;
 
 
@@ -171,17 +171,7 @@ public class ServerRequestor {
         return ERROR_RESPONSE_READ;
     }
 
-    /** interpretResponse
-     *      if the server returns a uuid, this function will remove that record from the db
-     * @param response the response string
-     * @param db the db
-     */
-    private static void interpretResponse(String response, MyDbWrapper db){
-        if (!(response.equals("") || response.equals(ServerRequestor.ERROR_RESPONSE_READ)))
-            db.removeRecord(response);
-//        Log.d("Server", "compare uuids: " + uuid.equals(response) + " original:|" + uuid
-//                + "|final:|" + response + "|");
-    }
+
 
 
 

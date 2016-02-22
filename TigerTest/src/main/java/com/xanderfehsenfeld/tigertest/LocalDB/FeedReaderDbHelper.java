@@ -100,7 +100,10 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    /* initialize entries */
+    /**getTableCreateStatement
+     *      build the sql statement to create the table
+     * @return
+     */
     private static String getTableCreateStatement(){
         String output;
         /* create a 'create' statement */
@@ -165,21 +168,3 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
         }
 
 }
-
-//        columns = new HashMap(){
-//            put(NETWORK_STRING, TYPE_TEXT),
-//            put(LAT_STRING, TYPE_REAL),
-//            put(LONG_STRING,TYPE_REAL),
-//            put(DOWNLOAD_STRING, TYPE_TEXT),
-//            put(ALT_STRING, TYPE_REAL),
-//            put(TIMESTAMP_STRING, TYPE_TEXT),
-//            put(TIMESTAMPFMT_STRING, TYPE_TEXT),
-//            put(CONNTIME_STRING,TYPE_REAL),
-//            put(CONNTIMEUNIT_STRING,TYPE_TEXT),
-//            put(BYTES_STRING,TYPE_INT),
-//            SPEED_STRING,
-//            MAC_STRING,
-//            ACCESSPT_STRING,
-//            LOCATIONPROV_STRING,
-//            ID_STRING
-//        };
